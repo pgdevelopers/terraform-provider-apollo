@@ -13,7 +13,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/client"
+	"github.com/machinebox/graphql"
 )
+
+type Client struct {
+	ApiKey            string
+	EnterPriseEnabled bool
+	GraphClient       *graphql.Client
+}
 
 // Ensure ApolloProvider satisfies various provider interfaces.
 var _ provider.Provider = &ApolloProvider{}
@@ -28,7 +35,7 @@ type ApolloProvider struct {
 
 // ApolloProviderModel describes the provider data model. - Reflects the schema
 type ApolloProviderModel struct {
-	PersonalApiKey types.String `tfsdk:"personalapikey"`
+	PersonalApiKey types.String `tfsdk:"personal_api_key"`
 }
 
 func (p *ApolloProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -39,7 +46,7 @@ func (p *ApolloProvider) Metadata(ctx context.Context, req provider.MetadataRequ
 func (p *ApolloProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"personalapikey": schema.StringAttribute{
+			"personal_api_key": schema.StringAttribute{
 				MarkdownDescription: "User's personal Apollo API key",
 				Required:            true,
 			},
@@ -60,7 +67,7 @@ func (p *ApolloProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	// if data.Endpoint.IsNull() { /* ... */ }
 	if data.PersonalApiKey.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
-			path.Root("personalapikey"),
+			path.Root("personal_api_key"),
 			"Unknown apollo api key",
 			"The provider cannot connect to the Apollo client because there is an unknown configuration value for the personal api key.",
 		)
@@ -68,7 +75,7 @@ func (p *ApolloProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 	if data.PersonalApiKey.ValueString() == "" {
 		resp.Diagnostics.AddAttributeError(
-			path.Root("personalapikey"),
+			path.Root("personal_api_key"),
 			"Missing apollo api key",
 			"The provider cannot connect to the Apollo client because there is a missing configuration value for the personal api key.",
 		)
@@ -84,7 +91,7 @@ func (p *ApolloProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 func (p *ApolloProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewExampleResource,
+		NewGraphResource,
 	}
 }
 
@@ -100,4 +107,17 @@ func New(version string) func() provider.Provider {
 			version: version,
 		}
 	}
+}
+
+func (cl *Client) Init() {
+	cl.GraphClient = graphql.NewClient("https://graphql.api.apollographql.com/api/graphql")
+}
+
+func (cl *Client) Query(c context.Context, q string, response interface{}) error {
+
+	graphqlRequest := graphql.NewRequest(q)
+	graphqlRequest.Header.Add("X-API-Key", cl.ApiKey)
+
+	return cl.GraphClient.Run(c, graphqlRequest, &response)
+
 }
