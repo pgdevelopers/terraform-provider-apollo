@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/client"
+	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/helpers"
 	"github.com/machinebox/graphql"
 )
 
@@ -41,6 +42,7 @@ type GraphResource struct {
 type GraphResourceModel struct {
 	OrgId     types.String `tfsdk:"org_id"`
 	GraphName types.String `tfsdk:"graph_name"`
+	GraphId  types.String `tfsdk:"graph_id"`
 }
 
 func (r *GraphResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -61,6 +63,10 @@ func (r *GraphResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				MarkdownDescription: "Name of your graph",
 				Required:            true,
 			},
+			"graph_id": schema.StringAttribute{
+				MarkdownDescription: "ID of your graph",
+				Computed: 		  true,
+		},
 		},
 	}
 }
@@ -102,17 +108,9 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	apollo.Init()
 	var result graph
 
-	// query := `
-	// mutation Service($orgId: ID!, $id: ID!, $name: String!, $adminOnly: Boolean!) {
-	// 	newService(accountId: `+ data.OrgId.ValueString() +`, id: `+ data.GraphName.ValueString() + "123" + `, name: ` + data.GraphName.ValueString() + `, hiddenFromUninvitedNonAdminAccountMembers: false) {
-	// 	  id
-	// 	  name
-	// 	  title
-	// 	}
-	//   }
-	// `
 	orgId := data.OrgId.ValueString()
-	id := data.GraphName.ValueString() + "123"
+	id := data.GraphName.ValueString() + helpers.RandomNumberString(3)
+	data.GraphId = types.String(id)
 	name := data.GraphName.ValueString()
 	adminOnly := "false"
 
@@ -130,6 +128,8 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	if err != nil {
 		resp.Diagnostics.AddError("create graph error", fmt.Sprintf("Unable to create graph, got error: %s", err))
 	}
+
+
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -193,13 +193,33 @@ func (r *GraphResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete Graph, got error: %s", err))
-	//     return
-	// }
+	//Initialize Apollo client
+	apollo := client.Client{
+		ApiKey:            r.client.ApiKey,
+		EnterPriseEnabled: false,
+		GraphClient:       graphql.NewClient("https://graphql.api.apollographql.com/api/graphql"),
+	}
+	apollo.Init()
+
+	var result graph
+	graphId := data.GraphId.ValueString()
+
+	err := apollo.Query(ctx, `
+
+		mutation Service
+		{
+			service( id:  "`+graphId+`") {
+		 		delete
+			}
+	  }
+		`,
+		&result)
+
+		if err != nil {
+			resp.Diagnostics.AddError("delete graph error", fmt.Sprintf("Unable to delete graph, got error: %s", err))
+		}
+
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *GraphResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
