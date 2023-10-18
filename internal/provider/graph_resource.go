@@ -110,7 +110,7 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	var result graph
 
 	orgId := data.OrgId.ValueString()
-	id := data.GraphName.ValueString() + helpers.RandomNumberString(3)
+	id := data.GraphName.ValueString() + helpers.RandomNumberString(5)
 	data.GraphId = basetypes.NewStringValue(id)
 	name := data.GraphName.ValueString()
 	adminOnly := "false"
@@ -128,6 +128,7 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	err := apollo.Query(ctx, query, result)
 	if err != nil {
 		resp.Diagnostics.AddError("create graph error", fmt.Sprintf("Unable to create graph, got error: %s", err))
+		return
 	}
 
 	// Write logs using the tflog package

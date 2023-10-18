@@ -85,6 +85,7 @@ func (p *ApolloProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *ApolloProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewGraphResource,
+		NewApiKeyResource,
 	}
 }
 
@@ -101,4 +102,3 @@ func New(version string) func() provider.Provider {
 		}
 	}
 }
-
