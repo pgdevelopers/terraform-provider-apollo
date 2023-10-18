@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/client"
 	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/helpers"
@@ -42,7 +43,7 @@ type GraphResource struct {
 type GraphResourceModel struct {
 	OrgId     types.String `tfsdk:"org_id"`
 	GraphName types.String `tfsdk:"graph_name"`
-	GraphId  types.String `tfsdk:"graph_id"`
+	GraphId   types.String `tfsdk:"graph_id"`
 }
 
 func (r *GraphResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -65,8 +66,8 @@ func (r *GraphResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			},
 			"graph_id": schema.StringAttribute{
 				MarkdownDescription: "ID of your graph",
-				Computed: 		  true,
-		},
+				Computed:            true,
+			},
 		},
 	}
 }
@@ -110,7 +111,7 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	orgId := data.OrgId.ValueString()
 	id := data.GraphName.ValueString() + helpers.RandomNumberString(3)
-	data.GraphId = types.String(id)
+	data.GraphId = basetypes.NewStringValue(id)
 	name := data.GraphName.ValueString()
 	adminOnly := "false"
 
@@ -128,8 +129,6 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	if err != nil {
 		resp.Diagnostics.AddError("create graph error", fmt.Sprintf("Unable to create graph, got error: %s", err))
 	}
-
-
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -215,11 +214,11 @@ func (r *GraphResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		`,
 		&result)
 
-		if err != nil {
-			resp.Diagnostics.AddError("delete graph error", fmt.Sprintf("Unable to delete graph, got error: %s", err))
-		}
+	if err != nil {
+		resp.Diagnostics.AddError("delete graph error", fmt.Sprintf("Unable to delete graph, got error: %s", err))
+	}
 
-		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *GraphResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
