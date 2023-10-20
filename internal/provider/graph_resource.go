@@ -131,12 +131,14 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	  	}
 		`
 
+	ctx = tflog.SetField(ctx, "response", response)
+
 	err := apollo.Query(ctx, query, response)
 	if err != nil {
 		resp.Diagnostics.AddError("create graph error", fmt.Sprintf("Unable to create graph, got error: %s", err))
 		return
 	}
-	resp.Diagnostics.AddError("check it", fmt.Sprintf("check it: %s", response.Data.NewService.Name))
+	resp.Diagnostics.AddError("check it", fmt.Sprintf("check it: %s", response))
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
