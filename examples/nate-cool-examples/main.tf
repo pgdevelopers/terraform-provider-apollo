@@ -16,7 +16,7 @@ provider "apollo" {
 #   graph_name = "provider-test"
 # }
 
-resource "apollo_apikey" "apikey" {
-  graph_id = "test-graph123456"
-  key_name = "provider"
-}
+# resource "apollo_apikey" "apikey" {
+#   graph_id = "test-graph123456"
+#   key_name = "provider"
+# }

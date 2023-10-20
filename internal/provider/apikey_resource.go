@@ -137,7 +137,7 @@ func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		resp.Diagnostics.AddError("create api key error", fmt.Sprintf("Unable to create api key, got error: %s", err))
 		return
 	}
-	resp.Diagnostics.AddError("check it", fmt.Sprintf("check it: %s", result))
+	//resp.Diagnostics.AddError("check it", fmt.Sprintf("check it: %s", result))
 	data.Token = basetypes.NewStringValue(result.Service.NewKey.Token)
 
 	// Write logs using the tflog package
