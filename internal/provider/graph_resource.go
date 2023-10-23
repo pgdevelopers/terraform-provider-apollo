@@ -103,6 +103,10 @@ func (r *GraphResource) Configure(ctx context.Context, req resource.ConfigureReq
 func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data GraphResourceModel
 
+	apollo := client.Client{
+		ApiKey:            r.client.ApiKey,
+	}
+
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -125,8 +129,10 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 		resp.Diagnostics.AddError("http request error", fmt.Sprintf("Unable to wrap http request, got error: %s", err))
 		return
 	}
-	request.Header.Add("x-api-key", "user:po.proctor-and-gamble.EN9763:BQHs7LrtV_B9f358ZqenqQ")
+
+
 	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("x-api-key", apollo.ApiKey)
 
 	response, err := client.Do(request)
 	if err != nil {
