@@ -18,5 +18,5 @@ provider "apollo" {
 
 resource "apollo_apikey" "apikey" {
   graph_id = "test-graph123456"
-  key_name = "provider"
+  key_name = "provider-key"
 }

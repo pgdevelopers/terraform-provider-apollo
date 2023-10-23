@@ -48,13 +48,15 @@ type ApiKeyResource struct {
 }
 
 type ApiKeyResponse struct {
-	Service struct {
-		NewKey struct {
-			KeyName string `json:"keyName"`
-			KeyId   string `json:"id"`
-			Token   string `json:"token"`
-		} `json:"newKey"`
-	} `json:"service"`
+	Data struct {
+		Service struct {
+			NewKey struct {
+				KeyName string `json:"keyName"`
+				ID      string `json:"id"`
+				Token   string `json:"token"`
+			} `json:"newKey"`
+		} `json:"service"`
+	} `json:"data"`
 }
 
 // ApiKeyResourceModel describes the resource data model.
@@ -125,38 +127,38 @@ func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-keyName := data.KeyName.ValueString()
-graphId := data.GraphId.ValueString()
+	keyName := data.KeyName.ValueString()
+	graphId := data.GraphId.ValueString()
 
-url := "https://graphql.api.apollographql.com/api/graphql"
-  method := "POST"
- payload := strings.NewReader("{\"query\":\"mutation Service($id: ID!, $keyName: String!) {\\n\\t\\tservice(id: $id) {\\n\\t\\t\\tnewKey(keyName: $keyName) {\\n\\t\\t\\t\\tkeyName\\n\\t\\t\\t\\tid\\n\\t\\t\\t\\ttoken\\n\\t\\t\\t}\\n\\t\\t}\\n\\t}\",\"variables\":{\"id\":\"" + graphId + "\",\"keyName\":\"" + keyName + "\"}}")
-  client := &http.Client {
-  }
-  request, err := http.NewRequest(method, url, payload)
-  if err != nil {
-    fmt.Println(err)
-    return
-  }
-  request.Header.Add("x-api-key", "user:po.proctor-and-gamble.EN9763:BQHs7LrtV_B9f358ZqenqQ")
-  request.Header.Add("Content-Type", "application/json")
-  res, err := client.Do(request)
-  if err != nil {
-    fmt.Println(err)
-    return
-  }
-  defer res.Body.Close()
-  body, err := ioutil.ReadAll(res.Body)
-  if err != nil {
-    fmt.Println(err)
-    return
-  }
-  var apiKeyData Data 
-  json.Unmarshal(body, &apiKeyData)
+	url := "https://graphql.api.apollographql.com/api/graphql"
+	method := "POST"
+	payload := strings.NewReader("{\"query\":\"mutation Service($id: ID!, $keyName: String!) {\\n\\t\\tservice(id: $id) {\\n\\t\\t\\tnewKey(keyName: $keyName) {\\n\\t\\t\\t\\tkeyName\\n\\t\\t\\t\\tid\\n\\t\\t\\t\\ttoken\\n\\t\\t\\t}\\n\\t\\t}\\n\\t}\",\"variables\":{\"id\":\"" + graphId + "\",\"keyName\":\"" + keyName + "\"}}")
+	client := &http.Client{}
+	request, err := http.NewRequest(method, url, payload)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	request.Header.Add("x-api-key", "user:po.proctor-and-gamble.EN9763:BQHs7LrtV_B9f358ZqenqQ")
+	request.Header.Add("Content-Type", "application/json")
+	res, err := client.Do(request)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var apiKeyData ApiKeyResponse
+	json.Unmarshal(body, &apiKeyData)
 
-  ctx = tflog.SetField(ctx, "lookie", string(body))
-  fmt.Println(string(body))
-  data.Token = basetypes.NewStringValue(apiKeyData.Service.NewKey.Token)
+	ctx = tflog.SetField(ctx, "lookie", string(body))
+	ctx = tflog.SetField(ctx, "lookie2", apiKeyData.Data.Service.NewKey.Token)
+	fmt.Println(string(body))
+	data.Token = basetypes.NewStringValue(apiKeyData.Data.Service.NewKey.Token)
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
