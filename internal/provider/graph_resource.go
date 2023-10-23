@@ -25,22 +25,12 @@ import (
 var _ resource.Resource = &GraphResource{}
 var _ resource.ResourceWithImportState = &GraphResource{}
 
-func NewGraphResource() resource.Resource {
-	return &GraphResource{}
-}
-
-type Data struct {
-	NewService NewService `json:"newService"`
-}
-
-type NewService struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Title string `json:"title"`
-}
-
 type Response struct {
 	Data Data `json:"data"`
+}
+
+func NewGraphResource() resource.Resource {
+	return &GraphResource{}
 }
 
 // GraphResource defines the resource implementation.
