@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/machinebox/graphql"
 )
 
@@ -18,8 +19,10 @@ func (cl *Client) Init() {
 
 func (cl *Client) Query(c context.Context, q string, response interface{}) error {
 
+	c = tflog.SetField(c, "query", q)
 	graphqlRequest := graphql.NewRequest(q)
 	graphqlRequest.Header.Add("X-API-Key", cl.ApiKey)
+	c = tflog.SetField(c, "response", response)
 
 	return cl.GraphClient.Run(c, graphqlRequest, &response)
 

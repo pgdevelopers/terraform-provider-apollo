@@ -26,12 +26,18 @@ func NewGraphResource() resource.Resource {
 	return &GraphResource{}
 }
 
-type graph struct {
-	NewService struct {
-		ID    string `json:"id"`
-		Name  string `json:"name"`
-		Title string `json:"title"`
-	} `json:"newService"`
+type Data struct {
+	NewService NewService `json:"newService"`
+}
+
+type NewService struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Title string `json:"title"`
+}
+
+type Response struct {
+	Data Data `json:"data"`
 }
 
 // GraphResource defines the resource implementation.
@@ -107,10 +113,10 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 		GraphClient:       graphql.NewClient("https://graphql.api.apollographql.com/api/graphql"),
 	}
 	apollo.Init()
-	var result graph
+	var lookie interface{}
 
 	orgId := data.OrgId.ValueString()
-	id := data.GraphName.ValueString() + helpers.RandomNumberString(3)
+	id := data.GraphName.ValueString() + helpers.RandomNumberString(5)
 	data.GraphId = basetypes.NewStringValue(id)
 	name := data.GraphName.ValueString()
 	adminOnly := "false"
@@ -125,10 +131,14 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	  	}
 		`
 
-	err := apollo.Query(ctx, query, result)
+	ctx = tflog.SetField(ctx, "lookie", lookie)
+
+	err := apollo.Query(ctx, query, lookie)
 	if err != nil {
 		resp.Diagnostics.AddError("create graph error", fmt.Sprintf("Unable to create graph, got error: %s", err))
+		return
 	}
+	resp.Diagnostics.AddError("check it", fmt.Sprintf("check it: %s", lookie))
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -200,7 +210,7 @@ func (r *GraphResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	}
 	apollo.Init()
 
-	var result graph
+	var response Response
 	graphId := data.GraphId.ValueString()
 
 	err := apollo.Query(ctx, `
@@ -212,7 +222,7 @@ func (r *GraphResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 			}
 	  }
 		`,
-		&result)
+		&response)
 
 	if err != nil {
 		resp.Diagnostics.AddError("delete graph error", fmt.Sprintf("Unable to delete graph, got error: %s", err))
