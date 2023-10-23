@@ -13,7 +13,7 @@ provider "apollo" {
 
 resource "apollo_graph" "graph" {
   org_id     = "procter-gamble"
-  graph_name = "provider-test-nate"
+  graph_name = "provider-testing"
 }
 
 # resource "apollo_apikey" "apikey" {

@@ -6,6 +6,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -105,41 +108,39 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	graphId := data.GraphName.ValueString() + helpers.RandomNumberString(5)
+	data.GraphId = basetypes.NewStringValue(graphId)
 
-	//Initialize Apollo client
-	apollo := client.Client{
-		ApiKey:            r.client.ApiKey,
-		EnterPriseEnabled: false,
-		GraphClient:       graphql.NewClient("https://graphql.api.apollographql.com/api/graphql"),
-	}
-	apollo.Init()
-	var lookie interface{}
-
+	url := "https://graphql.api.apollographql.com/api/graphql"
+	method := "POST"
 	orgId := data.OrgId.ValueString()
-	id := data.GraphName.ValueString() + helpers.RandomNumberString(5)
-	data.GraphId = basetypes.NewStringValue(id)
-	name := data.GraphName.ValueString()
-	adminOnly := "false"
+	graphName := data.GraphName.ValueString()
 
-	query := `
-		mutation Service {
-			newService(accountId: "` + orgId + `", id:  "` + id + `", name: "` + name + `", title: "` + name + `", hiddenFromUninvitedNonAdminAccountMembers: ` + adminOnly + `) {
-				id
-				name
-				title
-			}
-	  	}
-		`
+	payload := strings.NewReader("{\"query\":\"mutation Service($orgId: ID!, $id: ID!, $name: String!, $adminOnly: Boolean!) {\\n    newService(accountId: $orgId, id: $id, name: $name, hiddenFromUninvitedNonAdminAccountMembers: $adminOnly) {\\n      id\\n      name\\n      title\\n    }\\n  }\",\"variables\":{\"orgId\":\"" + orgId + "\",\"id\":\"" + graphId + "\",\"name\":\"" + graphName + "\",\"adminOnly\":false}}")
 
-	ctx = tflog.SetField(ctx, "lookie", lookie)
+	client := &http.Client{}
+	request, err := http.NewRequest(method, url, payload)
 
-	err := apollo.Query(ctx, query, lookie)
 	if err != nil {
-		resp.Diagnostics.AddError("create graph error", fmt.Sprintf("Unable to create graph, got error: %s", err))
+		ctx = tflog.SetField(ctx, err.Error(), err)
 		return
 	}
-	resp.Diagnostics.AddError("check it", fmt.Sprintf("check it: %s", lookie))
+	request.Header.Add("x-api-key", "user:po.proctor-and-gamble.EN9763:BQHs7LrtV_B9f358ZqenqQ")
+	request.Header.Add("Content-Type", "application/json")
 
+	response, err := client.Do(request)
+	if err != nil {
+		ctx = tflog.SetField(ctx, err.Error(), err)
+		return
+	}
+	defer response.Body.Close()
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		ctx = tflog.SetField(ctx, err.Error(), err)
+		return
+	}
+	ctx = tflog.SetField(ctx, "lookie", string(body))
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
 	tflog.Trace(ctx, "created a resource")
