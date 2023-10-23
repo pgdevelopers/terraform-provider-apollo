@@ -113,7 +113,7 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 		GraphClient:       graphql.NewClient("https://graphql.api.apollographql.com/api/graphql"),
 	}
 	apollo.Init()
-	var response Response
+	var lookie interface{}
 
 	orgId := data.OrgId.ValueString()
 	id := data.GraphName.ValueString() + helpers.RandomNumberString(5)
@@ -131,14 +131,14 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	  	}
 		`
 
-	ctx = tflog.SetField(ctx, "response", response)
+	ctx = tflog.SetField(ctx, "lookie", lookie)
 
-	err := apollo.Query(ctx, query, response)
+	err := apollo.Query(ctx, query, lookie)
 	if err != nil {
 		resp.Diagnostics.AddError("create graph error", fmt.Sprintf("Unable to create graph, got error: %s", err))
 		return
 	}
-	resp.Diagnostics.AddError("check it", fmt.Sprintf("check it: %s", response))
+	resp.Diagnostics.AddError("check it", fmt.Sprintf("check it: %s", lookie))
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
