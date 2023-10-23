@@ -122,7 +122,7 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	request, err := http.NewRequest(method, url, payload)
 
 	if err != nil {
-		ctx = tflog.SetField(ctx, err.Error(), err)
+		resp.Diagnostics.AddError("http request error", fmt.Sprintf("Unable to wrap http request, got error: %s", err))
 		return
 	}
 	request.Header.Add("x-api-key", "user:po.proctor-and-gamble.EN9763:BQHs7LrtV_B9f358ZqenqQ")
@@ -130,14 +130,14 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	response, err := client.Do(request)
 	if err != nil {
-		ctx = tflog.SetField(ctx, err.Error(), err)
+		resp.Diagnostics.AddError("http request error", fmt.Sprintf("Unable to do http request, got error: %s", err))
 		return
 	}
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		ctx = tflog.SetField(ctx, err.Error(), err)
+		resp.Diagnostics.AddError("body read error", fmt.Sprintf("Unable to read response body, got error: %s", err))
 		return
 	}
 	ctx = tflog.SetField(ctx, "lookie", string(body))
