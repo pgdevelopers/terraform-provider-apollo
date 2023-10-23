@@ -5,6 +5,6 @@ provider "terraform.local/local/apollo" {
   version     = "1.0.0"
   constraints = "1.0.0"
   hashes = [
-    "h1:uuhn+dOCyqL6Fn2bdSNU7u5VriTjI2II/sofz50dOi4=",
+    "h1:GnfrrSLLwg/fwSKAXfE9eR9Ws7MxMdaJw506vbIfVTY=",
   ]
 }
