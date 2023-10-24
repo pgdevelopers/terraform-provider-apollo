@@ -25,22 +25,12 @@ import (
 var _ resource.Resource = &GraphResource{}
 var _ resource.ResourceWithImportState = &GraphResource{}
 
-func NewGraphResource() resource.Resource {
-	return &GraphResource{}
-}
-
-type Data struct {
-	NewService NewService `json:"newService"`
-}
-
-type NewService struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Title string `json:"title"`
-}
-
 type Response struct {
 	Data Data `json:"data"`
+}
+
+func NewGraphResource() resource.Resource {
+	return &GraphResource{}
 }
 
 // GraphResource defines the resource implementation.
@@ -104,7 +94,7 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	var data GraphResourceModel
 
 	apollo := client.Client{
-		ApiKey:            r.client.ApiKey,
+		ApiKey: r.client.ApiKey,
 	}
 
 	// Read Terraform plan data into the model
@@ -129,7 +119,6 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 		resp.Diagnostics.AddError("http request error", fmt.Sprintf("Unable to wrap http request, got error: %s", err))
 		return
 	}
-
 
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("x-api-key", apollo.ApiKey)

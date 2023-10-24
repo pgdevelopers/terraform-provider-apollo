@@ -6,6 +6,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -14,7 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/client"
-	"github.com/machinebox/graphql"
+	"github.com/segmentio/encoding/json"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -25,19 +28,35 @@ func NewApiKeyResource() resource.Resource {
 	return &ApiKeyResource{}
 }
 
+type Data struct {
+	Service Service `json:"service"`
+}
+
+type Service struct {
+	NewKey NewKey `json:"newKey"`
+}
+
+type NewKey struct {
+	KeyName string `json:"keyName"`
+	ID      string `json:"id"`
+	Token   string `json:"token"`
+}
+
 // ApiKeyResource defines the resource implementation.
 type ApiKeyResource struct {
 	client *client.Client
 }
 
 type ApiKeyResponse struct {
-	Service struct {
-		NewKey struct {
-			KeyName string `json:"keyName"`
-			KeyId   string `json:"id"`
-			Token   string `json:"token"`
-		} `json:"newKey"`
-	} `json:"service"`
+	Data struct {
+		Service struct {
+			NewKey struct {
+				KeyName string `json:"keyName"`
+				ID      string `json:"id"`
+				Token   string `json:"token"`
+			} `json:"newKey"`
+		} `json:"service"`
+	} `json:"data"`
 }
 
 // ApiKeyResourceModel describes the resource data model.
@@ -108,37 +127,38 @@ func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	//Initialize Apollo client
-	apollo := client.Client{
-		ApiKey:            r.client.ApiKey,
-		EnterPriseEnabled: false,
-		GraphClient:       graphql.NewClient("https://graphql.api.apollographql.com/api/graphql"),
-	}
-	apollo.Init()
-	graphId := data.GraphId.ValueString()
 	keyName := data.KeyName.ValueString()
-	//role := data.Role.ValueString()
+	graphId := data.GraphId.ValueString()
 
-	query := `
-	mutation Service {
-		service(id: "` + graphId + `") {
-			newKey(keyName: "` + keyName + `") {
-				keyName
-				id
-				token
-			}
-		}
-	}
-`
-
-	var result ApiKeyResponse
-	err := apollo.Query(ctx, query, result)
+	url := "https://graphql.api.apollographql.com/api/graphql"
+	method := "POST"
+	payload := strings.NewReader("{\"query\":\"mutation Service($id: ID!, $keyName: String!) {\\n\\t\\tservice(id: $id) {\\n\\t\\t\\tnewKey(keyName: $keyName) {\\n\\t\\t\\t\\tkeyName\\n\\t\\t\\t\\tid\\n\\t\\t\\t\\ttoken\\n\\t\\t\\t}\\n\\t\\t}\\n\\t}\",\"variables\":{\"id\":\"" + graphId + "\",\"keyName\":\"" + keyName + "\"}}")
+	client := &http.Client{}
+	request, err := http.NewRequest(method, url, payload)
 	if err != nil {
-		resp.Diagnostics.AddError("create api key error", fmt.Sprintf("Unable to create api key, got error: %s", err))
+		fmt.Println(err)
 		return
 	}
-	//resp.Diagnostics.AddError("check it", fmt.Sprintf("check it: %s", result))
-	data.Token = basetypes.NewStringValue(result.Service.NewKey.Token)
+	request.Header.Add("x-api-key", "user:po.proctor-and-gamble.EN9763:BQHs7LrtV_B9f358ZqenqQ")
+	request.Header.Add("Content-Type", "application/json")
+	res, err := client.Do(request)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	var apiKeyData ApiKeyResponse
+	json.Unmarshal(body, &apiKeyData)
+
+	ctx = tflog.SetField(ctx, "lookie", string(body))
+	ctx = tflog.SetField(ctx, "lookie2", apiKeyData.Data.Service.NewKey.Token)
+	fmt.Println(string(body))
+	data.Token = basetypes.NewStringValue(apiKeyData.Data.Service.NewKey.Token)
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
