@@ -8,15 +8,15 @@ terraform {
 }
 
 provider "apollo" {
-  personal_api_key = "user:po.proctor-and-gamble.EN9763:BQHs7LrtV_B9f358ZqenqQ"
+  personal_api_key = "fake-api-key"
 }
 
 # resource "apollo_graph" "graph" {
-#   org_id     = "procter-gamble"
-#   graph_name = "provider-testing"
+#   org_id     = "fake-org"
+#   graph_name = "fake-graph"
 # }
 
 # resource "apollo_apikey" "apikey" {
-#   graph_id = apollo_graph.graph.graph_id
-#   key_name = "provider-key"
+#   graph_id = apollo_graph.graph.id
+#   key_name = "fake-key"
 # }
