@@ -6,7 +6,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -130,7 +130,7 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 	defer response.Body.Close()
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		resp.Diagnostics.AddError("body read error", fmt.Sprintf("Unable to read response body, got error: %s", err))
 		return

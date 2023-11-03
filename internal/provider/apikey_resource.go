@@ -6,7 +6,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -85,10 +85,6 @@ func (r *ApiKeyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				MarkdownDescription: "the name of the api key",
 				Required:            true,
 			},
-			// "role": schema.StringAttribute{
-			// 	MarkdownDescription: "the role assigned to the key",
-			// 	Required:            true,
-			// },
 			"token": schema.StringAttribute{
 				MarkdownDescription: "the token of the key",
 				Computed:            true,
@@ -147,7 +143,7 @@ func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println(err)
 		return
