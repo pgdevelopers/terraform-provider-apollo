@@ -26,40 +26,6 @@ import (
 var _ resource.Resource = &GraphResource{}
 var _ resource.ResourceWithImportState = &GraphResource{}
 
-// type Response struct {
-// 	Data data `json:"data"`
-// }
-
-// type data struct {
-// 	Me me `json:"data"`
-// }
-
-// type me struct {
-// 	ID          string       `json:"id"`
-// 	Name        string       `json:"name"`
-// 	Memberships []membership `json:"memberships"`
-// }
-
-// type membership struct {
-// 	Account account `json:"account"`
-// }
-
-// type account struct {
-// 	ID       string    `json:"id"`
-// 	Name     string    `json:"name"`
-// 	Services []service `json:"services"`
-// }
-
-// type service struct {
-// 	ID       string    `json:"id"`
-// 	Title    string    `json:"title"`
-// 	Variants []Variant `json:"variants"`
-// }
-
-// type Variant struct {
-// 	Name string `json:"name"`
-// }
-
 type Response struct {
 	Data struct {
 		Me struct {
