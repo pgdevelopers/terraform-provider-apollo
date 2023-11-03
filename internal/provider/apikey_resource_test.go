@@ -10,23 +10,22 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccExampleResource(t *testing.T) {
+func TestAccaApikeyResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccExampleResourceConfig("one"),
+				Config: testAccApikeyResourceConfig("one"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("scaffolding_example.test", "configurable_attribute", "one"),
-					resource.TestCheckResourceAttr("scaffolding_example.test", "defaulted", "example value when not configured"),
-					resource.TestCheckResourceAttr("scaffolding_example.test", "id", "example-id"),
+					resource.TestCheckResourceAttr("apollo_apikey.test", "configurable_attribute", "one"),
+					resource.TestCheckResourceAttr("apollo_apikey.test", "configurable_attribute", "test"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:      "scaffolding_example.test",
+				ResourceName:      "test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				// This is not normally necessary, but is here because this
@@ -37,9 +36,9 @@ func TestAccExampleResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccExampleResourceConfig("two"),
+				Config: testAccApikeyResourceConfig("two"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("scaffolding_example.test", "configurable_attribute", "two"),
+					resource.TestCheckResourceAttr("apollo_apikey.test", "configurable_attribute", "two"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -47,9 +46,9 @@ func TestAccExampleResource(t *testing.T) {
 	})
 }
 
-func testAccExampleResourceConfig(configurableAttribute string) string {
+func testAccApikeyResourceConfig(configurableAttribute string) string {
 	return fmt.Sprintf(`
-resource "scaffolding_example" "test" {
+resource "apollo_graph" "test" {
   configurable_attribute = %[1]q
 }
 `, configurableAttribute)
