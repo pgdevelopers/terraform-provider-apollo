@@ -148,7 +148,7 @@ func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 	var apiKeyData ApiKeyResponse
-	json.Unmarshal(body, &apiKeyData)
+	err = json.Unmarshal(body, &apiKeyData)
 	if err != nil {
 		fmt.Println(err)
 		return
