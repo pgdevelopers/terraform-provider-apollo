@@ -48,9 +48,10 @@ func TestAccaApikeyResource(t *testing.T) {
 }
 
 func testAccApikeyResourceConfig(configurableAttribute string) string {
-	return fmt.Sprintf(`
-resource "apollo_graph" "test" {
-  configurable_attribute = %[1]q
+	return fmt.Sprintln(`
+resource "apollo_apikey" "test" {
+	key_name = "test-key"
+	graph_id = "test-graph"
 }
 `, configurableAttribute)
 }

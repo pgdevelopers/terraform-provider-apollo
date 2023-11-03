@@ -50,9 +50,13 @@ func TestAccGraphResource(t *testing.T) {
 }
 
 func testAccGraphResourceConfig(configurableAttribute string) string {
-	return fmt.Sprintf(`
+	return fmt.Sprintln(`
 resource "apollo_graph" "test" {
-  configurable_attribute = %[1]q
+	graph_id = "test"
+	graph_name = "test-graph"
+	org_id = "test-org"
+	  }
+
 }
 `, configurableAttribute)
 }
