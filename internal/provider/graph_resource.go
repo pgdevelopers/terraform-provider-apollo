@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/client"
 	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/helpers"
 	"github.com/machinebox/graphql"
+	"github.com/segmentio/encoding/json"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -26,7 +27,25 @@ var _ resource.Resource = &GraphResource{}
 var _ resource.ResourceWithImportState = &GraphResource{}
 
 type Response struct {
-	Data Data `json:"data"`
+	Data struct {
+		Me struct {
+			ID          string `json:"id"`
+			Name        string `json:"name"`
+			Memberships []struct {
+				Account struct {
+					ID       string `json:"id"`
+					Name     string `json:"name"`
+					Services []struct {
+						ID       string `json:"id"`
+						Title    string `json:"title"`
+						Variants []struct {
+							Name string `json:"name"`
+						} `json:"variants"`
+					} `json:"services"`
+				} `json:"account"`
+			} `json:"memberships"`
+		} `json:"me"`
+	} `json:"data"`
 }
 
 func NewGraphResource() resource.Resource {
@@ -146,6 +165,7 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 func (r *GraphResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data GraphResourceModel
+	var GraphIds map[string]int
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -154,16 +174,18 @@ func (r *GraphResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read Graph, got error: %s", err))
-	//     return
+	Graphs := ListGraphs(r.client.ApiKey, resp)
+	resp.Diagnostics.AddError("graphs", fmt.Sprintf("graphs %s", Graphs))
+	// for _, membership := range Graphs.Data.Me.Memberships {
+	// 	for _, service := range membership.Account.Services {
+	// 		GraphIds[service.ID] = 1
+	// 	}
 	// }
 
+	ctx = tflog.SetField(ctx, "graphIds", GraphIds)
+
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *GraphResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -175,14 +197,6 @@ func (r *GraphResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update Graph, got error: %s", err))
-	//     return
-	// }
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -229,4 +243,45 @@ func (r *GraphResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 
 func (r *GraphResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func ListGraphs(apiKey string, resp *resource.ReadResponse) Response {
+	var response Response
+
+	url := "https://graphql.api.apollographql.com/api/graphql"
+	method := "POST"
+
+	payload := strings.NewReader("{\"query\":\"query ListVisibleGraphs {\\n  me {\\n    id\\n    name\\n    ... on User {\\n      memberships {\\n        # Graphs are divided among the oganizations you belong to\\n        account {\\n          id\\n          name\\n          services {\\n            id\\n            title\\n            variants {\\n              name\\n            }\\n          }\\n        }\\n      }\\n    }\\n  }\\n}\",\"variables\":{}}")
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, payload)
+
+	if err != nil {
+		resp.Diagnostics.AddError("api error", fmt.Sprintf("api error %s", err.Error()))
+		return response
+	}
+	req.Header.Add("x-api-key", apiKey)
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := client.Do(req)
+	if err != nil {
+		resp.Diagnostics.AddError("api error", fmt.Sprintf("api error %s", err.Error()))
+		return response
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		resp.Diagnostics.AddError("api error", fmt.Sprintf("api error %s", err.Error()))
+		return response
+	}
+	fmt.Println(string(body))
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		resp.Diagnostics.AddError("api error", fmt.Sprintf("api error %s", err.Error()))
+		return response
+	}
+
+	return response
 }
