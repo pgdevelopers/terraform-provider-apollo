@@ -1,5 +1,5 @@
 // Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MPL-2.0.
 
 package provider
 
@@ -97,7 +97,7 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 		ApiKey: r.client.ApiKey,
 	}
 
-	// Read Terraform plan data into the model
+	// Read Terraform plan data into the model.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -136,33 +136,25 @@ func (r *GraphResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 	ctx = tflog.SetField(ctx, "lookie", string(body))
-	// Write logs using the tflog package
-	// Documentation: https://terraform.io/plugin/log
+	// Write logs using the tflog package.
+	// Documentation: https://terraform.io/plugin/log.
 	tflog.Trace(ctx, "created a resource")
 
-	// Save data into Terraform state
+	// Save data into Terraform state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *GraphResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data GraphResourceModel
 
-	// Read Terraform prior state data into the model
+	// Read Terraform prior state data into the model.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read Graph, got error: %s", err))
-	//     return
-	// }
-
-	// Save updated data into Terraform state
+	// Save updated data into Terraform state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -176,29 +168,21 @@ func (r *GraphResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update Graph, got error: %s", err))
-	//     return
-	// }
-
-	// Save updated data into Terraform state
+	// Save updated data into Terraform state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *GraphResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data GraphResourceModel
 
-	// Read Terraform prior state data into the model
+	// Read Terraform prior state data into the model.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	//Initialize Apollo client
+	//Initialize Apollo client.
 	apollo := client.Client{
 		ApiKey:            r.client.ApiKey,
 		EnterPriseEnabled: false,
