@@ -19,9 +19,9 @@ func TestAccGraphResource(t *testing.T) {
 			{
 				Config: testAccGraphResourceConfig("one"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("apollo_graph.test", "configurable_attribute", "one"),
-					resource.TestCheckResourceAttr("apollo_graph.test", "defaulted", "example value when not configured"),
-					resource.TestCheckResourceAttr("apollo_graph.test", "id", "example-id"),
+					resource.TestCheckResourceAttr("apollo_graph.test", "graph_name", "test-graph"),
+					resource.TestCheckResourceAttr("apollo_graph.test", "org_id", "test-org"),
+					resource.TestCheckResourceAttr("apollo_graph.test", "graph_id", "123"),
 				),
 			},
 			// ImportState testing
@@ -39,7 +39,9 @@ func TestAccGraphResource(t *testing.T) {
 			{
 				Config: testAccGraphResourceConfig("two"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("apollo_graph.test", "configurable_attribute", "two"),
+					resource.TestCheckResourceAttr("apollo_graph.test", "graph_name", "test-graph"),
+					resource.TestCheckResourceAttr("apollo_graph.test", "org_id", "test-org"),
+					resource.TestCheckResourceAttr("apollo_graph.test", "graph_id", "123"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase

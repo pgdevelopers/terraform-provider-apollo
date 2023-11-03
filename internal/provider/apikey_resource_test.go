@@ -19,8 +19,8 @@ func TestAccaApikeyResource(t *testing.T) {
 			{
 				Config: testAccApikeyResourceConfig("one"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("apollo_apikey.test", "configurable_attribute", "one"),
-					resource.TestCheckResourceAttr("apollo_apikey.test", "configurable_attribute", "test"),
+					resource.TestCheckResourceAttr("apollo_apikey.test", "graph_id", "test"),
+					resource.TestCheckResourceAttr("apollo_apikey.test", "key_name", "test"),
 				),
 			},
 			// ImportState testing
@@ -38,7 +38,8 @@ func TestAccaApikeyResource(t *testing.T) {
 			{
 				Config: testAccApikeyResourceConfig("two"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("apollo_apikey.test", "configurable_attribute", "two"),
+					resource.TestCheckResourceAttr("apollo_apikey.test", "graph_id", "test"),
+					resource.TestCheckResourceAttr("apollo_apikey.test", "key_name", "test"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
