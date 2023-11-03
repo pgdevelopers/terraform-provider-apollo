@@ -1,12 +1,12 @@
 // Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MPL-2.0.
 
 package provider
 
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -21,8 +21,8 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ resource.Resource = &ExampleResource{}
-var _ resource.ResourceWithImportState = &ExampleResource{}
+var _ resource.Resource = &ApiKeyResource{}
+var _ resource.ResourceWithImportState = &ApiKeyResource{}
 
 func NewApiKeyResource() resource.Resource {
 	return &ApiKeyResource{}
@@ -63,8 +63,7 @@ type ApiKeyResponse struct {
 type ApiKeyResourceModel struct {
 	GraphId types.String `tfsdk:"graph_id"`
 	KeyName types.String `tfsdk:"key_name"`
-	//Role    types.String `tfsdk:"role"`
-	Token types.String `tfsdk:"token"`
+	Token   types.String `tfsdk:"token"`
 }
 
 func (r *ApiKeyResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -85,10 +84,6 @@ func (r *ApiKeyResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				MarkdownDescription: "the name of the api key",
 				Required:            true,
 			},
-			// "role": schema.StringAttribute{
-			// 	MarkdownDescription: "the role assigned to the key",
-			// 	Required:            true,
-			// },
 			"token": schema.StringAttribute{
 				MarkdownDescription: "the token of the key",
 				Computed:            true,
@@ -120,7 +115,7 @@ func (r *ApiKeyResource) Configure(ctx context.Context, req resource.ConfigureRe
 func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data ApiKeyResourceModel
 
-	// Read Terraform plan data into the model
+	// Read Terraform plan data into the model.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -147,88 +142,68 @@ func (r *ApiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	var apiKeyData ApiKeyResponse
-	json.Unmarshal(body, &apiKeyData)
+	err = json.Unmarshal(body, &apiKeyData)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	ctx = tflog.SetField(ctx, "lookie", string(body))
 	ctx = tflog.SetField(ctx, "lookie2", apiKeyData.Data.Service.NewKey.Token)
 	fmt.Println(string(body))
 	data.Token = basetypes.NewStringValue(apiKeyData.Data.Service.NewKey.Token)
 
-	// Write logs using the tflog package
-	// Documentation: https://terraform.io/plugin/log
+	// Write logs using the tflog package.
+	// Documentation: https://terraform.io/plugin/log.
 	tflog.Trace(ctx, "created an apikey")
 
-	// Save data into Terraform state
+	// Save data into Terraform state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *ApiKeyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data ApiKeyResourceModel
 
-	// Read Terraform prior state data into the model
+	// Read Terraform prior state data into the model.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read ApiKey, got error: %s", err))
-	//     return
-	// }
-
-	// Save updated data into Terraform state
+	// Save updated data into Terraform state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *ApiKeyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data ApiKeyResourceModel
 
-	// Read Terraform plan data into the model
+	// Read Terraform plan data into the model.
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update ApiKey, got error: %s", err))
-	//     return
-	// }
-
-	// Save updated data into Terraform state
+	// Save updated data into Terraform state.
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *ApiKeyResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data ApiKeyResourceModel
 
-	// Read Terraform prior state data into the model
+	// Read Terraform prior state data into the model.
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete ApiKey, got error: %s", err))
-	//     return
-	// }
 }
 
 func (r *ApiKeyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
